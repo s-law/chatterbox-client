@@ -5,12 +5,10 @@ app.server = 'https://api.parse.com/1/classes/chatterbox';
 app.msgs = [];
 
 app.init = function() {
+
   app.fetch();
   app.clearMessages();
   // msgs.results is an array
-  app.msgs.forEach(function(msgObject) {
-    app.addMessage(msgObject);
-  })
 };
 
 // DATA I/O STUFF GOES HERE
@@ -39,9 +37,11 @@ app.fetch = function() {
     type: 'GET',
     contentType: 'application/json',
     success: function (data) {
-      // console.log(data);
       for (var i = 0; i < data.results.length; i++) {
         app.msgs.push(data.results[i]);
+      }
+      for (var i = 0; i < app.msgs.length; i++) {
+        app.addMessage(app.msgs[i]);
       }
     },
     error: function (data) {
@@ -50,6 +50,18 @@ app.fetch = function() {
     }
   });
 };
+
+// app.escapeHTML = function(text) {
+//   var map = {
+//     '&': '&amp;',
+//     '<': '&lt;',
+//     '>': '&gt;',
+//     '"': '&quot;',
+//     "'": '&#039;'
+//   };
+
+//   return text ? text.replace(/[&<>"']/g, function(m) { return map[m]; }) : "";
+// }
 
 // DATA I/O SECTION ENDS HERE
 
@@ -61,6 +73,7 @@ app.clearMessages = function() {
 }
 
 app.addMessage = function(msgObj) {
+  // var safeTxt = app.escapeHTML(msgObj.text);
   var safeTxt = document.createTextNode(msgObj.text);
   $('#chats').append('<div class="msgObj"></div>');
   $('#chats').children().last()[0].appendChild(safeTxt);
