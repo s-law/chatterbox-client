@@ -1,3 +1,5 @@
+// GLOBAL VARIABLES START HERE
+
 var app = {};
 
 app.server = 'https://api.parse.com/1/classes/chatterbox';
@@ -5,13 +7,15 @@ app.server = 'https://api.parse.com/1/classes/chatterbox';
 app.msgs = [];
 
 app.init = function() {
-
+  app.msgs = [];
   app.fetch();
   app.clearMessages();
   // msgs.results is an array
 };
 
-// DATA I/O STUFF GOES HERE
+// GLOBAL VARIABLES END HERE
+
+// DATA I/O STUFF STARTS HERE
 
 app.send = function(message) {
   $.ajax({
@@ -51,6 +55,19 @@ app.fetch = function() {
   });
 };
 
+$( document ).ready(function() {
+  $('#send').on("click", function() {
+      //get all the inputs into an array.
+    var inputs = $('input');
+    var message = {
+      username: inputs[0].value || "anonymous",
+      text: inputs[1].value || "marco pollo",
+      roomname: inputs[2].value || "Lobby"
+    };
+    app.send(message);
+  });    
+});
+
 // app.escapeHTML = function(text) {
 //   var map = {
 //     '&': '&amp;',
@@ -65,7 +82,7 @@ app.fetch = function() {
 
 // DATA I/O SECTION ENDS HERE
 
-// PRESENTATION STUFF GOES HERE
+// PRESENTATION STUFF STARTS HERE
 
 app.clearMessages = function() {
   //Removing all of our message elements from the chatterbox
@@ -74,9 +91,18 @@ app.clearMessages = function() {
 
 app.addMessage = function(msgObj) {
   // var safeTxt = app.escapeHTML(msgObj.text);
-  var safeTxt = document.createTextNode(msgObj.text);
-  $('#chats').append('<div class="msgObj"></div>');
-  $('#chats').children().last()[0].appendChild(safeTxt);
+  var safeMsg = document.createTextNode(msgObj.text);
+  var safeName = document.createTextNode(msgObj.username);
+
+  $('#chats').append('<div class="msg"><span class="username"></span>:&nbsp;</div>');
+  var newMsg = $('#chats').children().last()[0]
+  // newMsg.appendChild('<span>' + safeName + '</span>');
+  // newMsg.appendChild(safeName);
+  newMsg.appendChild(safeMsg);
+  $('#chats span').last().append(safeName);
+  // console.log(newMsg.children());
+  // newMsg.children().first().style('color', 'red'); 
+
   // Speculative way of identifying room name while escaping bad input goes here
   // var safeRm = document.createTextNode(msgObj.roomname);
   // $('#chats').children().last()[0].append('<div class="roomname hidden"></div>');)
@@ -88,3 +114,5 @@ app.addRoom = function() {
 };
 
 // PRESENTATION SECTION ENDS HERE
+app.init();
+setInterval(app.init, 10000);
