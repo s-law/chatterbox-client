@@ -75,6 +75,10 @@ form input[type=text] {
     font-weight: 800;
 }
 
+.hidden {
+    display: none;
+}
+
 .chat:hover {
     background-color: #ddd;
 }
