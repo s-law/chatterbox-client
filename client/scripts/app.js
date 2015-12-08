@@ -4,14 +4,20 @@ var app = {};
 
 app.server = 'https://api.parse.com/1/classes/chatterbox';
 
-app.msgs = [];
+app.request = [];
+
+app.cache = [];
+
+app.ObjId = {};
 
 app.roomNames = {};
 
+app.roomSelection = 'everything';
+
 app.init = function() {
-  app.msgs = [];
+  
   app.fetch();
-  app.clearMessages();
+  app.clearMessages(); 
   // msgs.results is an array
 };
 
@@ -28,6 +34,9 @@ app.send = function(message) {
     contentType: 'application/json',
     success: function (data) {
       console.log('chatterbox: Message sent');
+      if (app.roomSelection !== 'everything') {
+        app.init();
+      }
     },
     error: function (data) {
       // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -44,11 +53,26 @@ app.fetch = function() {
     contentType: 'application/json',
     success: function (data) {
       for (var i = 0; i < data.results.length; i++) {
-        app.msgs.push(data.results[i]);
+        app.request.push(data.results[i]);
       }
-      for (var i = 0; i < app.msgs.length; i++) {
-        app.addMessage(app.msgs[i]);
+
+      while (app.request.length > 0) {
+        var msgHolder = app.request.pop(); 
+        if(!app.ObjId[msgHolder.objectId]) {
+          app.cache.unshift(msgHolder);
+          // to-do:
+            // 1. app.cache.pop() to keep msg limit at 100;
+            // 2. change addmessage to prepend and invoke immediately
+        }
       }
+
+      for (var i = 0; i < app.cache.length; i++) {
+        var msgObject = app.cache[i]
+        app.addMessage(msgObject);
+        app.ObjId[msgObject.objectId] = true;
+      }
+
+      app.cache = app.cache.slice(0,250);
     },
     error: function (data) {
       // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -73,8 +97,9 @@ app.escapeHTML = function(text) {
 
 $( document ).ready(function() {
   // click handler for sending message
-  $('#send').on("click", function() {
+  $('#send').on("click", function(event) {
       //get all the inputs into an array.
+    event.preventDefault();
     var inputs = $('input');
     var message = {
       username: inputs[0].value || "anonymous",
@@ -86,9 +111,14 @@ $( document ).ready(function() {
 
   // select handler for selecting room
   $('#roomSelect').on('change', function() {
-    var selection = this.value;
-    // FIX THIS SELECTION HERE!!!!
-    $('.msg :not(.'+ selection + ')').closest('div').toggle();
+    app.roomSelection = this.value;
+    if (app.roomSelection === 'everything') {
+      $('.msg').removeClass('hidden');
+    } else {
+      $('.msg').addClass('hidden');
+      $('.'+app.roomSelection).removeClass('hidden');
+      $('input')[2].value = app.roomSelection;
+    }
   })
 });
 
@@ -105,11 +135,16 @@ app.addMessage = function(msgObj) {
   // var safeTxt = app.escapeHTML(msgObj.text);
   var safeMsg = document.createTextNode(msgObj.text);
   var safeName = document.createTextNode(msgObj.username);
-  var safeRm = app.escapeHTML(msgObj.roomname).split(' ').join('_');
+  var safeRm = app.escapeHTML(msgObj.roomname).split(' ').join('_').split("&#039;").join('');
+  var prefixClass = '<div class="msg ';
 
-  $('#chats').append('<div class="msg ' + safeRm + '"><span class="username"></span>:&nbsp;</div>');
-  var newMsg = $('#chats').children().last()[0]
-  newMsg.appendChild(safeMsg);
+  if (app.roomSelection !== 'everything' && app.roomSelection !== safeRm) {
+    prefixClass += 'hidden ';
+  }
+
+  $('#chats').append(prefixClass + safeRm + '"><span class="username"></span>:&nbsp;</div>');
+  var newMsg = $('#chats').children().last();
+  newMsg[0].appendChild(safeMsg);
   $('#chats span').last().append(safeName);
   if (!app.roomNames.hasOwnProperty(safeRm)) {
     app.roomNames[safeRm] = safeRm;
@@ -123,4 +158,4 @@ app.addRoom = function(roomName) {
 
 // PRESENTATION SECTION ENDS HERE
 app.init();
-setInterval(app.init, 30000);
+setInterval(app.init, 15000);
