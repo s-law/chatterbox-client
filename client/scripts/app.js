@@ -6,6 +6,8 @@ app.server = 'https://api.parse.com/1/classes/chatterbox';
 
 app.msgs = [];
 
+app.roomNames = {};
+
 app.init = function() {
   app.msgs = [];
   app.fetch();
@@ -55,6 +57,20 @@ app.fetch = function() {
   });
 };
 
+
+app.escapeHTML = function(text) {
+  var map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+
+
+  return text ? text.replace(/[&<>"']/g, function(m) { return map[m]; }) : "";
+}
+
 $( document ).ready(function() {
   $('#send').on("click", function() {
       //get all the inputs into an array.
@@ -67,18 +83,6 @@ $( document ).ready(function() {
     app.send(message);
   });    
 });
-
-// app.escapeHTML = function(text) {
-//   var map = {
-//     '&': '&amp;',
-//     '<': '&lt;',
-//     '>': '&gt;',
-//     '"': '&quot;',
-//     "'": '&#039;'
-//   };
-
-//   return text ? text.replace(/[&<>"']/g, function(m) { return map[m]; }) : "";
-// }
 
 // DATA I/O SECTION ENDS HERE
 
@@ -93,24 +97,20 @@ app.addMessage = function(msgObj) {
   // var safeTxt = app.escapeHTML(msgObj.text);
   var safeMsg = document.createTextNode(msgObj.text);
   var safeName = document.createTextNode(msgObj.username);
+  var safeRm = app.escapeHTML(msgObj.roomname).split(' ').join('_');
 
-  $('#chats').append('<div class="msg"><span class="username"></span>:&nbsp;</div>');
+  $('#chats').append('<div class="msg ' + safeRm + '"><span class="username"></span>:&nbsp;</div>');
   var newMsg = $('#chats').children().last()[0]
-  // newMsg.appendChild('<span>' + safeName + '</span>');
-  // newMsg.appendChild(safeName);
   newMsg.appendChild(safeMsg);
   $('#chats span').last().append(safeName);
-  // console.log(newMsg.children());
-  // newMsg.children().first().style('color', 'red'); 
-
-  // Speculative way of identifying room name while escaping bad input goes here
-  // var safeRm = document.createTextNode(msgObj.roomname);
-  // $('#chats').children().last()[0].append('<div class="roomname hidden"></div>');)
-  // $('#chats').children().last()[0].appendChild(safeRm);
+  if (!app.roomNames.hasOwnProperty(safeRm)) {
+    app.roomNames[safeRm] = safeRm;
+    app.addRoom(safeRm);
+  }
 }
 
-app.addRoom = function() {
-  $('#roomSelect').append('<div class="roomname" id="'+ message.roomname + '">' + message.roomname + '</div>');
+app.addRoom = function(roomName) {
+  $('#roomSelect').append('<option value=' + roomName + '>' + roomName +'</option>');
 };
 
 // PRESENTATION SECTION ENDS HERE
