@@ -14,6 +14,8 @@ app.roomNames = {};
 
 app.roomSelection = 'everything';
 
+app.friends = {};
+
 app.init = function() {
   
   app.fetch();
@@ -73,6 +75,41 @@ app.fetch = function() {
       }
 
       app.cache = app.cache.slice(0,250);
+
+      $( document ).ready(function() {
+  // click handler for sending message
+        $('#send').on("click", function(event) {
+            //get all the inputs into an array.
+          event.preventDefault();
+          var inputs = $('input');
+          var message = {
+            username: inputs[0].value || "anonymous",
+            text: inputs[1].value || "marco pollo",
+            roomname: inputs[2].value || "Lobby"
+          };
+          app.send(message);
+        });    
+
+        // select handler for selecting room
+        $('#roomSelect').on('change', function() {
+          app.roomSelection = this.value;
+          if (app.roomSelection === 'everything') {
+            $('.msg').removeClass('hidden');
+          } else {
+            $('.msg').addClass('hidden');
+            $('.'+app.roomSelection).removeClass('hidden');
+            $('input')[2].value = app.roomSelection;
+          }
+        });
+
+        $('.username').on('click', function() {
+          if (app.friends[this.innerHTML] === undefined){
+            app.friends[this.innerHTML] = this.innerHTML;
+          } else {
+            delete app.friends[this.innerHTML]
+          }
+        });
+      });
     },
     error: function (data) {
       // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -95,33 +132,6 @@ app.escapeHTML = function(text) {
   return text ? text.replace(/[&<>"']/g, function(m) { return map[m]; }) : "";
 }
 
-$( document ).ready(function() {
-  // click handler for sending message
-  $('#send').on("click", function(event) {
-      //get all the inputs into an array.
-    event.preventDefault();
-    var inputs = $('input');
-    var message = {
-      username: inputs[0].value || "anonymous",
-      text: inputs[1].value || "marco pollo",
-      roomname: inputs[2].value || "Lobby"
-    };
-    app.send(message);
-  });    
-
-  // select handler for selecting room
-  $('#roomSelect').on('change', function() {
-    app.roomSelection = this.value;
-    if (app.roomSelection === 'everything') {
-      $('.msg').removeClass('hidden');
-    } else {
-      $('.msg').addClass('hidden');
-      $('.'+app.roomSelection).removeClass('hidden');
-      $('input')[2].value = app.roomSelection;
-    }
-  })
-});
-
 // DATA I/O SECTION ENDS HERE
 
 // PRESENTATION STUFF STARTS HERE
@@ -142,20 +152,26 @@ app.addMessage = function(msgObj) {
     prefixClass += 'hidden ';
   }
 
+
   $('#chats').append(prefixClass + safeRm + '"><span class="username"></span>:&nbsp;</div>');
   var newMsg = $('#chats').children().last();
+
   newMsg[0].appendChild(safeMsg);
   $('#chats span').last().append(safeName);
   if (!app.roomNames.hasOwnProperty(safeRm)) {
     app.roomNames[safeRm] = safeRm;
     app.addRoom(safeRm);
   }
+
+  var userChk = $('#chats span').last()[0].innerHTML;
+  if(app.friends[userChk]) {
+    newMsg.addClass('friend');
+  }
 }
 
 app.addRoom = function(roomName) {
   $('#roomSelect').append('<option value=' + roomName + '>' + roomName +'</option>');
 };
-
 // PRESENTATION SECTION ENDS HERE
 app.init();
 setInterval(app.init, 15000);
