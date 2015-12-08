@@ -72,6 +72,7 @@ app.escapeHTML = function(text) {
 }
 
 $( document ).ready(function() {
+  // click handler for sending message
   $('#send').on("click", function() {
       //get all the inputs into an array.
     var inputs = $('input');
@@ -82,6 +83,13 @@ $( document ).ready(function() {
     };
     app.send(message);
   });    
+
+  // select handler for selecting room
+  $('#roomSelect').on('change', function() {
+    var selection = this.value;
+    // FIX THIS SELECTION HERE!!!!
+    $('.msg :not(.'+ selection + ')').closest('div').toggle();
+  })
 });
 
 // DATA I/O SECTION ENDS HERE
@@ -115,4 +123,4 @@ app.addRoom = function(roomName) {
 
 // PRESENTATION SECTION ENDS HERE
 app.init();
-setInterval(app.init, 10000);
+setInterval(app.init, 30000);
